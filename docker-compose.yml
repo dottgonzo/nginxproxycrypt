@@ -1,0 +1,39 @@
+version: '3'
+
+networks:
+ proxy-tier:
+  external:
+   name: nginx-proxy
+
+volumes:
+  vhost:
+
+
+services:
+  nginx-proxy:
+    image: jwilder/nginx-proxy
+    networks:
+      - proxy-tier
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:                     
+      - /docker/proxy/public:/usr/share/nginx/html
+      - /docker/proxy/certs:/etc/nginx/certs:ro
+      - vhost:/etc/nginx/vhost.d
+      - /usr/share/nginx/html
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    labels:
+      - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy=true"
+  letsencrypt:
+    image: jrcs/letsencrypt-nginx-proxy-companion
+    networks:
+      - proxy-tier
+    restart: always
+    volumes:
+      - /docker/proxy/certs:/etc/nginx/certs:rw
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - vhost:/etc/nginx/vhost.d
+      - /docker/proxy/public:/usr/share/nginx/html
+
